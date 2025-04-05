@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import {useDispatch,useSelector} from 'react-redux'
-import {postAdded,postRemoved} from '../storeApp/postSlice.js'
+import {postAdded,} from '../storeApp/postSlice.js'
 import {selectAllPost} from '../storeApp/postSlice.js'
+import Article from './postArticle.jsx'
 
 export default function Adding(){
   const dispatch=useDispatch() 
@@ -9,20 +10,10 @@ export default function Adding(){
   const [data,setData]=useState({title:'',
                                  content:'',
                                  author:''})
-function Removing(){
-
-}
 
 
-const currentPost=posts.posts.map(post=><div className='post'
-key={post.id}>
-    <h2>{post.title}</h2>
-    <p>{post.content}</p>
-    <p className='author'><i>{post.author}</i></p>
-    <span onClick={()=>dispatch(postRemoved(post))}
-    className='remove'>remove post</span>
-</div>) 
-
+const currentPost=posts.posts.map(post=>{
+return <Article key={post.id} post={post}/>} ) 
 function handleChange(e){
     const {name,value}=e.target
     setData({...data,[name]:value})}
