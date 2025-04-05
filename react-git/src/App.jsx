@@ -1,12 +1,12 @@
-
-import './App.css'
+import './App.css';
+import Adding from './myComponents/adding.jsx';
 
 function App() {
   
 
   return (
     <>
-    <p>Hello World</p>
+    <Adding/>
     </>
   )
 }
