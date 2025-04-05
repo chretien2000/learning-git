@@ -11,44 +11,45 @@ export default function Adding(){
                                  content:'',
                                  author:''})
 
-
+const canSave=[data.title,data.content,data.author].every(Boolean)
 const currentPost=posts.posts.map(post=>{
 return <Article key={post.id} post={post}/>} ) 
 function handleChange(e){
     const {name,value}=e.target
     setData({...data,[name]:value})}
 
-    function handleAddPost(){
+    function sendAddPost(){
         dispatch(postAdded(data.title,data.content,data.author))
+       setData({title:'',content:'',author:''}) 
     }
 
     return(<>
 
-    <div>
+    <div className='input-container'>
         <h3>Add Post</h3>
 <form onSubmit={(e)=>{
-            e.preventDefault(),handleAddPost()}}>
+            e.preventDefault(),sendAddPost()}}>
     
     <label htmlFor="title">Add title:</label>
         <input type='text' id='title'
                value={data.title}
-               name='title'
-               onChange={handleChange}/>  
+               name='title' className='input'
+               onChange={handleChange}/> <br/> 
     <label htmlFor="author">select Author:</label>
         <select name="author" id="author"
-        value={data.author}
+        value={data.author} className='input'
         onChange={handleChange}>
             <option value=""></option>
             <option value="Chretien">Chretien</option>
             <option value="Jackson"> Jackson</option>
             <option value="Karangwa">Karangwa</option>
-            </select> 
+            </select> <br/>
    <label htmlFor="content">Add Content:</label>
         <input type='text' id='content'
                value={data.content}
-               name='content'
-               onChange={handleChange}/> 
-               <button>Save post</button>
+               name='content' className='input'
+               onChange={handleChange}/> <br/>
+               <button disabled={!canSave} className='buts'>Save post</button>
  </form>
 
     </div>
