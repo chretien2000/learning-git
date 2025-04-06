@@ -8,8 +8,8 @@ border-radius: 5px;padding: 3px;color: black;}
 body{background-color: rgb(50, 50, 50);color: rgb(145, 225, 237);}
 .date{font-weight: bold;font-style: italic; font-size: 0.8em;margin-left: 20px;}
 .input{width: 90%; margin: 5px; padding: 4px;}
-.buts{background-color: rgb(48, 174, 233); color: white; padding: 7px; 
-    border-radius: 5px; width: 90%; margin: 5px;}
+.buts{background-color: rgb(48, 174, 233); color: white; padding: 27px; 
+    border-radius: 250px; width: 100px; margin: 5px;}
     .input-container{display: flex;flex-direction: column;
     justify-content: flex-start; background-color: rgb(96, 88, 88);
 padding: 20px; border-radius: 10px; max-width: 500px; margin: auto;}

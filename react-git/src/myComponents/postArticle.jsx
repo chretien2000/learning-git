@@ -11,7 +11,7 @@ const dispatch=useDispatch()
         <p>{post.content}</p>
         <p className='author'><i>..{post.author}</i> <span><DateDisplay date={post.date}/></span></p>
         <span onClick={()=>dispatch(postRemoved(post))}
-        className='remove'>remove post</span>
+        className='remove'>Delete</span>
         <Reactions id={post.id} reaction={post.reactions}/>
     </article>
     )
