@@ -1,25 +1,43 @@
-import {useState} from 'react';
+import {useState,useEffect} from 'react';
 import {useDispatch,useSelector} from 'react-redux'
 import {postAdded,} from '../storeApp/postSlice.js'
 import {selectAllPost} from '../storeApp/postSlice.js'
 import Article from './postArticle.jsx'
+import {fetchPost} from '../storeApp/postSlice'
+import { selectAllUser } from '../storeApp/userStore.js'
 
 export default function Adding(){
   const dispatch=useDispatch() 
   const posts= useSelector(selectAllPost) 
   const [data,setData]=useState({title:'',
                                  content:'',
-                                 author:''})
+                                 author:''}
+                                   )                             
+     
+useEffect(()=>{
+     if(posts.status==='idle'){
+        dispatch(fetchPost())}
+            },[posts.status])
+const users=useSelector(selectAllUser)
+ const AuthorList=users.map(user=><option key={user.id}
+ value={user.name}>{user.name}</option>)
+ 
 
 const canSave=[data.title,data.content,data.author].every(Boolean)
-const currentPost=posts.posts.map(post=>{
+let currentpost;
+if(posts.status==='succeded'){
+const sortedPost=posts.posts.slice().sort((a,b)=> b.date.localeCompare(a.date))
+currentpost=sortedPost.map(post=>{
+    
 return <Article key={post.id} post={post}/>} ) 
+}
+ 
 function handleChange(e){
     const {name,value}=e.target
     setData({...data,[name]:value})}
 
     function sendAddPost(){
-        dispatch(postAdded(data.title,data.content,data.author))
+        dispatch(postAdded({title:data.title,body:data.content,author:data.author}))
        setData({title:'',content:'',author:''}) 
     }
 
@@ -40,9 +58,7 @@ function handleChange(e){
         value={data.author} className='input'
         onChange={handleChange}>
             <option value=""></option>
-            <option value="Chretien">Chretien</option>
-            <option value="Jackson"> Jackson</option>
-            <option value="Karangwa">Karangwa</option>
+            {AuthorList}
             </select> <br/>
    <label htmlFor="content">Add Content:</label>
         <input type='text' id='content'
@@ -53,6 +69,6 @@ function handleChange(e){
  </form>
 
     </div>
-    {currentPost}
+    {posts.status==='succeded'? currentpost:'Looading'}
     </>)
 }
