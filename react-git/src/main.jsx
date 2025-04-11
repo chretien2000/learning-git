@@ -6,10 +6,14 @@ import {store} from './storeApp/store.js'
 import {Provider} from 'react-redux'
 import { fetchUsers } from './storeApp/userStore.js'
 store.dispatch(fetchUsers())
-//console.log(store.getState())
+import { BrowserRouter as Router,Routes,Route } from 'react-router-dom'
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-   <App />
+    <Router>
+      <Routes>
+        <Route path='/*' element={<App/>} />
+      </Routes>
+    </Router>
   </Provider>
     
 )

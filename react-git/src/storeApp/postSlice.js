@@ -36,7 +36,7 @@ const postSlice=createSlice({
         postRemoved(state,action){
             const {id}=action.payload
             const poets= state.posts.filter(post=>post.id!==id)
-            console.log(poets)
+            console.log(action.payload)
             state.posts=poets
             
         },
