@@ -25,7 +25,7 @@ const outher=users.find(user=>user.id===Number(id))
             return(<h1>Post Deleted</h1>)}
     
     return(
-        <article>
+        <article className='detail'>
             <h2>{renderedpost.title}</h2>
             <p>{renderedpost.body}</p>
             <Reactions id={renderedpost.id} reaction={renderedpost.reactions}/>
