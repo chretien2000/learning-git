@@ -1,12 +1,14 @@
-import {useParams} from 'react-router-dom'
+import {useParams,Link,useNavigate} from 'react-router-dom'
 import {selectAllPost} from '../storeApp/postSlice.js'
 import {useSelector,useDispatch} from 'react-redux'
 import Reactions from './reactions.jsx'
 import { postRemoved } from '../storeApp/postSlice'
-import DateDisplay from './dateDisply.jsx'
+import {DeletePost} from '../storeApp/postSlice.js'
 import {selectAllUser} from '../storeApp/userStore.js'
 
+
 export default function PostDetails(){
+const navigate=useNavigate()
 const dispatch=useDispatch()
 const {id}=useParams()
 const post=useSelector(selectAllPost)
@@ -23,6 +25,10 @@ const outher=users.find(user=>user.id===Number(id))
         
         if(!renderedpost){
             return(<h1>Post Deleted</h1>)}
+
+    function Delete(){
+    dispatch(DeletePost({id:renderedpost.id}))
+    navigate('/posts')}
     
     return(
         <article className='detail'>
@@ -31,10 +37,11 @@ const outher=users.find(user=>user.id===Number(id))
             <Reactions id={renderedpost.id} reaction={renderedpost.reactions}/>
             <p><span>...{Author}</span></p>
             <span onClick={()=>dispatch(postRemoved(renderedpost))}
-            className='remove'>Delete</span>
+            className='remove'>Delete by reducer</span>
+            <Link to={`/update/${renderedpost.id}`}><span>Edit</span></Link>
+            <span onClick={()=>Delete()}
+                className='Thunk'>Delete by Tunk</span>
+            
         </article>
     )
 }
-
-/*<Reactions id={postDetail.id} reaction={postDetail.reactions}/>
-  <p className='author'><i>..{Author}</i> <span><DateDisplay date={postDetail.date}/></span></p> */

@@ -10,9 +10,9 @@ const users=useSelector(selectAllUser)
 const outher=users.find(user=>user.id===post.id)
 let Author;
 if(outher){ 
-    Author=outher.name
-    }
-    else{Author= post.author}
+    Author= post.author||outher.name
+   }
+    else{ Author= post.author}
 
     return(
         <Link to={`/posts/${post.id}`}
@@ -25,6 +25,7 @@ if(outher){
         <span onClick={()=>dispatch(postRemoved(post))}
         className='remove'>Delete</span>
         <Reactions id={post.id} reaction={post.reactions}/>
+        
         
     </article>
     </Link>)

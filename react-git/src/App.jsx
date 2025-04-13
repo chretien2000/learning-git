@@ -1,6 +1,7 @@
 
 import './App.css';
 import Adding from './myComponents/adding.jsx';
+import PostUpdate from './myComponents/UpdatePost.jsx'
 import Actions from './myComponents/Action.jsx'
 import Layout from './Layouts/Layout.jsx';
 import {Routes,Route} from 'react-router-dom'
@@ -12,13 +13,13 @@ function App() {
     <>
     <Routes>
       <Route path='/' element={<Layout/>}>
-      
       <Route index element={<Actions/>}/>
       <Route path='posts' element={<Adding/>}/>
       <Route path='posts/:id' element={<PostDetails/>}/>
+      <Route path='update/:Id' element={<PostUpdate/>}/>
+      
       </Route>
     </Routes>
-    
     </>
   )
 }
