@@ -15,8 +15,6 @@ if(outher){
     else{ Author= post.author}
 
     return(
-        <Link to={`/posts/${post.id}`}
-       className='link' >
     <article className='post' >
        
         <h2>{post.title.substring(0,40)}</h2>
@@ -24,9 +22,8 @@ if(outher){
         <p className='author'><i>..{Author}</i> <span><DateDisplay date={post.date}/></span></p>
         <span onClick={()=>dispatch(postRemoved(post))}
         className='remove'>Delete</span>
-        <Reactions id={post.id} reaction={post.reactions}/>
-        
-        
-    </article>
-    </Link>)
+        <Reactions id={post.id} reaction={post.reactions}/> 
+        <Link to={`/posts/${post.id}`}
+        className='link' ><h4>View post</h4></Link>
+    </article>)
 }
