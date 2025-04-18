@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {useDispatch,useSelector} from 'react-redux'
-import {postAdded,} from '../storeApp/postSlice.js'
+import {addNewPost} from '../storeApp/postSlice.js'
 import { selectAllUser } from '../storeApp/userStore.js'
 
 export default function Actions(){
@@ -19,7 +19,7 @@ export default function Actions(){
         setData({...data,[name]:value})}
 
     function sendAddPost(){
-        dispatch(postAdded({title:data.title,body:data.content,author:data.author}))
+        dispatch(addNewPost({title:data.title,body:data.content,author:data.author}))
         setData({title:'',content:'',author:''}) }
 
         return(<>

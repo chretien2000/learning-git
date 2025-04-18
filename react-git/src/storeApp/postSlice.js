@@ -1,19 +1,25 @@
-import {createSlice,createAsyncThunk,createSelector} from '@reduxjs/toolkit'
+import {createSlice,
+    createAsyncThunk,
+    createSelector,
+createEntityAdapter} from '@reduxjs/toolkit'
 import {nanoid} from 'nanoid'
 import {sub} from 'date-fns'
 import axios from 'axios'
 
-const initialState={status:'idle',
-    posts:[],error:null,count:0}
     const URL='https://jsonplaceholder.typicode.com/posts'
-export const fetchPost=createAsyncThunk('fetchPost/post',async()=>{
+const postAdapter=createEntityAdapter({
+    sortComparer:(a,b)=>b.date.localeCompare(a.date)
+})
+const initialState=postAdapter.getInitialState({status:'idle',
+                                                error:null,count:0})
+export const fetchPost=createAsyncThunk('fetchPost/post',async(_,{rejectWithValue})=>{
     try{const response= await axios.get(URL)
     return response.data}
-    catch(error){return error.message}
+    catch(error){return rejectWithValue(error.message||'Network error')}
 })
 
 export const addNewPost=createAsyncThunk('add/post',async(PostToAdd)=>{
-    try{const response= await axios.get(URL,PostToAdd)
+    try{const response= await axios.post(URL,PostToAdd)
     return response.data}
     catch(error){return error.message}
 })
@@ -22,38 +28,20 @@ export const UpdatePost=createAsyncThunk('updatePost/post',async(postToUpdate)=>
     const {id}=postToUpdate;
     try{
         const response=await axios.put(`${URL}/${id}`,postToUpdate)
-        console.log(postToUpdate)
         return response.data
     }
     catch(error){return rejectWithValue(error.message) }
 })  
 export const DeletePost=createAsyncThunk('deletePost/post',async(postTodelete)=>{
     const {id}=postTodelete
-    try{const resp=await axios.delete(`${URL}/${id}`)
-     console.log(resp)     
+    try{const resp=await axios.delete(`${URL}/${id}`)    
     return {id}}
           catch(err){return err.message}
 })
 const postSlice=createSlice({
     name:'post',
     initialState,
-    reducers:{
-        postAdded:{
-         reducer(state,action){
-                state.posts.push(action.payload) },
-         prepare({title,body:content,author}){
-                return {payload:{title,
-                                body:content,
-                                author,
-                                id:nanoid(),
-                                reactions:{like:0,
-                                        love:0,
-                                        angry:0,
-                                        rocket:0
-                            },
-                            date:new Date().toISOString() }}
-                            }
-                        },
+    reducers:{ 
         postRemoved(state,action){
             const {id}=action.payload
             const poets= state.posts.filter(post=>post.id!==id)
@@ -61,14 +49,13 @@ const postSlice=createSlice({
             state.posts=poets
             
         },
-        addCount(state,action){
+        addCount(state){
             state.count++
         },
         countReactions(state,action){
             const {id,reaction}=action.payload
-            const pos=state.posts.find(post=>post.id===id) 
+            const pos=state.entities[id] 
          if(pos){
-            //console.log(pos)
             pos.reactions[reaction]++
          }}
         },
@@ -86,15 +73,18 @@ const postSlice=createSlice({
                          angry:0,
                           rocket:0},date:sub(baseDate,{minutes:mins++}).toISOString()}
             })
-    
-            state.posts=state.posts.concat(posting)
+            postAdapter.upsertMany(state,posting)
         }).addCase(fetchPost.rejected,(state,action)=>{
             state.status='failed',
             state.error=action.payload
         })
         .addCase(addNewPost.fulfilled,(state,action)=>{
-            console.log(action.payload)
-            state.posts.push(action.payload)
+            action.payload.date=new Date().toISOString()
+            action.payload.reactions={like:0,
+                love:0,
+                 angry:0,
+                  rocket:0}
+            postAdapter.upsertOne(state,action.payload)
         })
         .addCase(addNewPost.rejected,state=>{
             state.error=action.payload
@@ -105,15 +95,12 @@ const postSlice=createSlice({
                 console.log(actions.payload)
                 return;
             }
-            
-            const {id}=actions.payload
-            const postToUpdate=state.posts.find(post=>post.id===id)
-            const filteredpost=state.posts.filter(post=>post.id!==id)
-            state.posts=postToUpdate?[...filteredpost,{...actions.payload,date:new Date().toISOString(),
-                reactions:{like:0,
-                    love:0,
-                    angry:0,
-                    rocket:0}}]:state.posts
+            console.log(actions.payload)
+        postAdapter.upsertOne(state,{...actions.payload,date:new Date().toISOString(),
+            reactions:{like:0,
+                love:0,
+                angry:0,
+                rocket:0}})
         })
         .addCase(DeletePost.fulfilled,(state,action)=>{
            console.log(action.payload)
@@ -123,19 +110,23 @@ const postSlice=createSlice({
                 return;
             }
             const {id}=action.payload
-          state.posts=state.posts.filter(post=>post.id!==id)
+         postAdapter.removeOne(state,id)
         })
     }
        })
 
+       export const {selectAll:selectAllPosts,
+                     selectById:selectpostById,
+                     selectIds:selectPostIds
+       }=postAdapter.getSelectors(state=>state.myPosts)
+
 export const {postAdded,postRemoved,countReactions,addCount}=postSlice.actions
-export const selectPost=(state)=>state.myPosts.posts
 export const selectStatus=(state)=>state.myPosts.status
 export const selectError=(state)=>state.myPosts.error
 export const selectCount=(state)=>state.myPosts.count
 export const selectAllPost=(state)=>state.myPosts
 export const selectpostByUser=createSelector(
-    [selectPost,(state,userId)=>userId],(posts,userId)=>{
+    [selectAllPosts,(_,userId)=>userId],(posts,userId)=>{
         return posts.filter(post=>post.userId===userId)
     }
 )

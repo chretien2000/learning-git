@@ -1,7 +1,7 @@
 import {UpdatePost} from '../storeApp/postSlice'
 import {useParams, useNavigate} from 'react-router-dom'
 import {useState} from 'react'
-import {selectAllPost}  from '../storeApp/postSlice'
+import {selectAllPosts}  from '../storeApp/postSlice'
 import {useSelector,useDispatch} from 'react-redux'
 import {selectAllUser} from '../storeApp/userStore'
 
@@ -9,8 +9,8 @@ export default function PostUpdate(){
     const {Id}=useParams()
      const navigate=useNavigate()
     const dispatch=useDispatch()
-    const posts=useSelector(selectAllPost)
-    const myPost=posts.posts.find(post=>post.id.toString()===Id)
+    const posts=useSelector(selectAllPosts)
+    const myPost=posts.find(post=>post.id.toString()===Id)
     
     const author=useSelector(selectAllUser)
     const [data,setData]=useState(

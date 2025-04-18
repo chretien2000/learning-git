@@ -1,5 +1,5 @@
 import {useParams,Link,useNavigate} from 'react-router-dom'
-import {selectAllPost} from '../storeApp/postSlice.js'
+import {selectAllPosts} from '../storeApp/postSlice.js'
 import {useSelector,useDispatch} from 'react-redux'
 import Reactions from './reactions.jsx'
 import { postRemoved } from '../storeApp/postSlice'
@@ -11,8 +11,9 @@ export default function PostDetails(){
 const navigate=useNavigate()
 const dispatch=useDispatch()
 const {id}=useParams()
-const post=useSelector(selectAllPost)
-const renderedpost=post.posts.find(post=>post.id.toString()===id)
+const post=useSelector(selectAllPosts)
+//console.log(post)
+const renderedpost=post.find(post=>post.id===Number(id))
 
 const users=useSelector(selectAllUser)
 const outher=users.find(user=>user.id===Number(id))
