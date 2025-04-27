@@ -1,33 +1,38 @@
 import {useState} from 'react';
-import {useDispatch,useSelector} from 'react-redux'
-import {addNewPost} from '../storeApp/postSlice.js'
-import { selectAllUser } from '../storeApp/userStore.js'
+import {useSelector} from 'react-redux'
+import {useAddnewPostMutation} from '../storeApp/postSlice.js'
+import {selectAllUsers } from "../storeApp/userStore";
 
 export default function Actions(){
-    const dispatch=useDispatch() 
     const [data,setData]=useState({title:'',
                                    content:'',
-                                   author:''}) 
-                                     
-    const users=useSelector(selectAllUser)
-    const AuthorList=users.map(user=><option key={user.id}
-                                value={user.name}>{user.name}</option>)
-                
-    const canSave=[data.title,data.content,data.author].every(Boolean)
+                                   author:''})
+const [addNewPost,{isLoading}]=useAddnewPostMutation() 
+      const myUsers=useSelector(selectAllUsers)  
+                                  
+    const AuthorList=myUsers.map(user=> <option key={user.id}
+        alue={user.name}>{user.name}</option>)
+        
+    const canSave=[data.title,data.content,data.author].every(Boolean)&&!isLoading
     function handleChange(e){
         const {name,value}=e.target
         setData({...data,[name]:value})}
 
-    function sendAddPost(){
-        dispatch(addNewPost({title:data.title,body:data.content,author:data.author}))
-        setData({title:'',content:'',author:''}) }
+    async function sendAddPost(e){
+        e.preventDefault()
+        if(canSave){
+            try{addNewPost({title:data.title,body:data.content,author:data.author}).unwrap()
+            setData({title:'',content:'',author:''})}
+            catch(error){
+                console.log('failed to save post',error)
+            }}
+         }
 
         return(<>
 
             <div className='input-container'>
                 <h3>Add Post</h3>
-        <form onSubmit={(e)=>{
-                    e.preventDefault(),sendAddPost()}}>
+        <form onSubmit={(e)=>sendAddPost(e)}>
             
             <label htmlFor="title">Add title:</label>
                 <input type='text' id='title'

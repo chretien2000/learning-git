@@ -1,9 +1,11 @@
 import {configureStore} from '@reduxjs/toolkit'
-import postReducer from './postSlice'
-import userReducer from './userStore'
+import {setupListeners} from '@reduxjs/toolkit/query/react'
+import{mySlice} from './Api/QuerySlice.js'
+
+
 export const store=configureStore({
     reducer:{
-        myPosts:postReducer,
-        users:userReducer
-    }
+        [mySlice.reducerPath]:mySlice.reducer},
+    middleware:(getDefaultMiddleware)=>getDefaultMiddleware().concat(mySlice.middleware)
 })
+setupListeners(store.dispatch)

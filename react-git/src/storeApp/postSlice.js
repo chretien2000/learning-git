@@ -1,135 +1,118 @@
-import {createSlice,
-    createAsyncThunk,
-    createSelector,
-createEntityAdapter} from '@reduxjs/toolkit'
-import {nanoid} from 'nanoid'
+import {createSelector,
+        createEntityAdapter} from '@reduxjs/toolkit'
 import {sub} from 'date-fns'
-import axios from 'axios'
-
-    const URL='https://jsonplaceholder.typicode.com/posts'
+import { mySlice } from './Api/QuerySlice'
+    
 const postAdapter=createEntityAdapter({
     sortComparer:(a,b)=>b.date.localeCompare(a.date)
 })
-const initialState=postAdapter.getInitialState({status:'idle',
-                                                error:null,count:0})
-export const fetchPost=createAsyncThunk('fetchPost/post',async(_,{rejectWithValue})=>{
-    try{const response= await axios.get(URL)
-    return response.data}
-    catch(error){return rejectWithValue(error.message||'Network error')}
-})
+const initialState=postAdapter.getInitialState()
 
-export const addNewPost=createAsyncThunk('add/post',async(PostToAdd)=>{
-    try{const response= await axios.post(URL,PostToAdd)
-    return response.data}
-    catch(error){return error.message}
-})
-
-export const UpdatePost=createAsyncThunk('updatePost/post',async(postToUpdate)=>{
-    const {id}=postToUpdate;
-    try{
-        const response=await axios.put(`${URL}/${id}`,postToUpdate)
-        return response.data
-    }
-    catch(error){return rejectWithValue(error.message) }
-})  
-export const DeletePost=createAsyncThunk('deletePost/post',async(postTodelete)=>{
-    const {id}=postTodelete
-    try{const resp=await axios.delete(`${URL}/${id}`)    
-    return {id}}
-          catch(err){return err.message}
-})
-const postSlice=createSlice({
-    name:'post',
-    initialState,
-    reducers:{ 
-        postRemoved(state,action){
-            const {id}=action.payload
-            const poets= state.posts.filter(post=>post.id!==id)
-            console.log(action.payload)
-            state.posts=poets
-            
+export const ExtendedSlice=mySlice.injectEndpoints({
+  endpoints:(builder)=>({
+    getPost:builder.query({
+        query:()=>'/posts',
+        transformResponse:responseData=>{
+            let min=1;
+            const loadedPost=responseData.map(post=>{
+                const basepost={...post,
+                    date:post?.date||sub(new Date(),{minutes:min++}).toISOString(),
+                    reactions:post?.reactions||{thumbsup:0,
+                                               wow:0,heart:0,
+                                               rocket:0,coffee:0}}
+                        return basepost})
+            return postAdapter.setAll(initialState,loadedPost)
         },
-        addCount(state){
-            state.count++
-        },
-        countReactions(state,action){
-            const {id,reaction}=action.payload
-            const pos=state.entities[id] 
-         if(pos){
-            pos.reactions[reaction]++
-         }}
-        },
-    extraReducers(builder){
-        builder.addCase(fetchPost.pending,(state,action)=>{
-            state.status='loading'
-        })
-        .addCase(fetchPost.fulfilled,(state,action)=>{
-            state.status='succeded'
-            const baseDate=new Date()
-            let mins=5
-            const posting=action.payload.map(post=>{
-                    return {...post,reactions:{like:0,
-                        love:0,
-                         angry:0,
-                          rocket:0},date:sub(baseDate,{minutes:mins++}).toISOString()}
+        providesTags:(result,undefined,arg)=>  [
+            {type:'post',id:'LIST'}, ...result.ids.map(id=>({type:'post',id}))]
+    }),
+    getPostById:builder.query({
+        query:(postId)=>`/posts/?userId=${postId}`,
+        transformResponse:responseData=>{
+            let min=1;
+            const loadedpost=responseData.map(post=>{
+                const basePost={...post,
+                    date:post?.date||sub(new Date(),{minutes:min++}).toISOString(),
+                    reactions:post?.reactions||{thumbsup:0,
+                        wow:0,heart:0,
+                        rocket:0,coffee:0}}
+            return basePost
             })
-            postAdapter.upsertMany(state,posting)
-        }).addCase(fetchPost.rejected,(state,action)=>{
-            state.status='failed',
-            state.error=action.payload
-        })
-        .addCase(addNewPost.fulfilled,(state,action)=>{
-            action.payload.date=new Date().toISOString()
-            action.payload.reactions={like:0,
-                love:0,
-                 angry:0,
-                  rocket:0}
-            postAdapter.upsertOne(state,action.payload)
-        })
-        .addCase(addNewPost.rejected,state=>{
-            state.error=action.payload
-        })
-        .addCase(UpdatePost.fulfilled,(state,actions)=>{
-            if(!actions.payload?.id){
-                console.log('could not complete updade')
-                console.log(actions.payload)
-                return;
-            }
-            console.log(actions.payload)
-        postAdapter.upsertOne(state,{...actions.payload,date:new Date().toISOString(),
-            reactions:{like:0,
-                love:0,
-                angry:0,
-                rocket:0}})
-        })
-        .addCase(DeletePost.fulfilled,(state,action)=>{
-           console.log(action.payload)
-            if(!action.payload?.id){
-                console.log('unable to delete post')
-                console.log(action.payload)
-                return;
-            }
-            const {id}=action.payload
-         postAdapter.removeOne(state,id)
-        })
-    }
-       })
+            return postAdapter.setAll(initialState,loadedpost)},
+            providesTags:(result,undefined,arg)=>[
+                ...result.ids.map(id=>({type:'post',id}))]
+            }),
+            addnewPost:builder.mutation({
+                query:(post)=>{
+                    console.log(post)
+                    return {
+                    url:'posts',
+                    method:'POST',
+                    body:{...post,
+                        date:post?.date||new Date().toISOString(),
+                        reactions:post?.reactions||{thumbsup:0,
+                            wow:0,heart:0,
+                            rocket:0,coffee:0}
+                    }
+                    
+                }},
+                invalidatesTags:[{type:'post',id:'LIST'}]
+            }),
+            updatePost:builder.mutation({
+                query:(post)=>({
+                    url:`/posts/${post.id}`,
+                    method:'PUT',
+                    body:{...post,
+                        date:post?.date||new Date().toISOString(),
+                        reactions:post?.reactions ||{thumbsup:0,
+                            wow:0,heart:0,
+                            rocket:0,coffee:0}
+                    }
+                }),
+                invalidatesTags:(result,err,arg)=>[
+                    {type:'post',id:arg.id}
+                ]
+            }),
+            deletePost:builder.mutation({
+                query:({id})=>({
+                    url:`/posts/${id}`,
+                    method:'DELETE'
+                }),
+                invalidatesTags:(result,err,arg)=>[{type:'post',id:arg.id}]
+            }),
+            countReactions:builder.mutation({
+                query:({id,reactions})=>({
+                    url:`posts/${id}`,
+                    method:'PATCH',
+                    body:{reactions}
+                }),
+                invalidatesTags:(result,err,arg)=>[{type:'post',id:arg.id}],
+                onQueryStarted:async({id,reactions},{dispatch,queryFulfilled})=>{
+                    const patchResult=dispatch(
+                        ExtendedSlice.util.updateQueryData('getPost',undefined,draft=>{
+                            const post=draft?.entities?.[id]
+                            if(post){
+                                post.reactions=reactions
+                            }})
+                    )
+                     try{await queryFulfilled}
+                     catch{patchResult.undo()}
+
+                }
+            })
+  })  
+})
+export const{useGetPostQuery,useGetPostByIdQuery,
+    useAddnewPostMutation,useCountReactionsMutation,
+    useDeletePostMutation,useUpdatePostMutation}=ExtendedSlice
+    export const selectPostResult=ExtendedSlice.endpoints.getPost.select()
+     const selectPostData=createSelector(
+        selectPostResult,postResult=>postResult?.data
+    )
 
        export const {selectAll:selectAllPosts,
                      selectById:selectpostById,
                      selectIds:selectPostIds
-       }=postAdapter.getSelectors(state=>state.myPosts)
+       }=postAdapter.getSelectors(state=>selectPostData(state)??initialState)
 
-export const {postAdded,postRemoved,countReactions,addCount}=postSlice.actions
-export const selectStatus=(state)=>state.myPosts.status
-export const selectError=(state)=>state.myPosts.error
-export const selectCount=(state)=>state.myPosts.count
-export const selectAllPost=(state)=>state.myPosts
-export const selectpostByUser=createSelector(
-    [selectAllPosts,(_,userId)=>userId],(posts,userId)=>{
-        return posts.filter(post=>post.userId===userId)
-    }
-)
-
-export default postSlice.reducer
 

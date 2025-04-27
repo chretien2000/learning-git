@@ -1,29 +1,56 @@
-import {createSlice,createAsyncThunk} from '@reduxjs/toolkit'
-import axios from 'axios'
-const URL='https://jsonplaceholder.typicode.com/users'
+import { createEntityAdapter,createSelector
+} from '@reduxjs/toolkit'
+import{mySlice} from './Api/QuerySlice.js'
+import {sub} from 'date-fns'
 
-const initialState=[]
-export const fetchUsers=createAsyncThunk('fetcUsers',async()=>{
-    try{
-        const response= await axios.get(URL)
-        return response.data
-    }
-    catch(error){return error.message}
+const userAdapter=createEntityAdapter({
+    sortComparer:(a,b)=>b.date.localeCompare(a.date)
 })
- 
-const UserPosts=createSlice({
-    name:'user',
-    initialState,
-    reducers:{},
-    extraReducers(builder){
-        builder.addCase(fetchUsers.fulfilled,(state,actions)=>{
-            //console.log(actions.payload)
-           state.push(...actions.payload)
-        })
-    }
+const initialUser=userAdapter.getInitialState()
 
-}
+export const extendedUser=mySlice.injectEndpoints({
+    endpoints:(builder)=>({
+        getUser:builder.query({
+          query:()=>'/users',  
+        transformResponse:responseData=>{
+            let min=0
+           const userToLoad= responseData.map(user=>{
+            const myuser={...user,date:user?.date||sub(new Date(),{minutes:min++}).toISOString()}
+            return myuser
+           })
+        return userAdapter.setAll(initialUser,userToLoad) },
+        providesTags:(result,error,arg)=>[
+            {type:'user',id:'list'},
+            ...result.ids.map(id=>({type:'user',id}))
+        ]
+        }),
+        getUserById:builder.query({
+            query:(id)=>`/users/${id}`,
+            transformResponse:responseData=>{
+                const baseUser={...responseData,
+                    date:responseData?.date||new Date().toISOString()}
+                    return userAdapter.setAll(initialUser,[baseUser])
+            },
+            providesTags:(result,error,arg)=>[{type:'user',id:result.id}]
+        }),
+        AddUser:builder.mutation({
+            query:(user)=>({
+                url:'/users',
+                method:'POST',
+                body:{...user,date:user?.date||new Date().toISOString()}
+            }),
+            invalidatesTags:[{type:'user',id:'list'}]
+        })
+    })
+})
+export const {useGetUserQuery,useAddUserMutation,useGetUserByIdQuery}=extendedUser
+const allUsers=extendedUser.endpoints.getUser.select()
+export const userData=createSelector(
+    allUsers,
+    myusers=>myusers?.data
 )
-export const selectUserById=(state,userId)=>state.users.find(user=>user.id===userId)
-export const selectAllUser=(state)=>state.users
-export default UserPosts.reducer;
+export const {selectAll:selectAllUsers,
+             selectById:selectUsersById,
+              selectIds:selectUserIds}=userAdapter.getSelectors(state=>userData(state)??initialUser)
+
+

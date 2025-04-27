@@ -1,38 +1,44 @@
-import {UpdatePost} from '../storeApp/postSlice'
+import {useUpdatePostMutation} from '../storeApp/postSlice'
 import {useParams, useNavigate} from 'react-router-dom'
 import {useState} from 'react'
 import {selectAllPosts}  from '../storeApp/postSlice'
-import {useSelector,useDispatch} from 'react-redux'
-import {selectAllUser} from '../storeApp/userStore'
+import {useSelector} from 'react-redux'
+import {selectAllUsers } from "../storeApp/userStore";
 
 export default function PostUpdate(){
     const {Id}=useParams()
      const navigate=useNavigate()
-    const dispatch=useDispatch()
+     const [UpdatePost,{isLoading}]=useUpdatePostMutation()
     const posts=useSelector(selectAllPosts)
     const myPost=posts.find(post=>post.id.toString()===Id)
-    
-    const author=useSelector(selectAllUser)
+    const user=useSelector(selectAllUsers)
     const [data,setData]=useState(
                                   {title:myPost.title,
-                                    author:'',
+                                    auther:'',
                                     body:myPost.body,
                                    id:Id})
-    const AllAuthors=author.map(oth=><option key={oth.id}>{oth.name}</option>)
+  const canSave=[data.title,data.body,data.auther].every(Boolean)&&!isLoading
+    const AllAuthors=user.map(user=><option key={user.id}>{user.name}</option>)
     function handleInput(e){
       setData(prev=>{
         return {...prev,[e.target.name]:e.target.value}})
     }
-    function sub(e){
+    async function sub(e){
+      console.log(canSave)
         e.preventDefault()
-        dispatch(UpdatePost({title:data.title,
-                             body:data.body,
-                             author:data.outher,
-                             id:Id})).unwrap()
+        if(canSave){
+          try{
+        await UpdatePost({id:Id,title:data.title,body:data.body,auther:data.auther}).unwrap() 
+          }
+          catch(error){
+            console.log('failed to update post',error)
+          }
         setData({title:'',
-                 outher:'',
-                 body:''})
-                 navigate('/posts')}
+               auther:'',
+               body:''})
+        navigate('/posts')}
+        }
+        
     return(
         <form onSubmit={sub}>
             <label htmlFor="title">Title:</label>
@@ -40,9 +46,9 @@ export default function PostUpdate(){
                id='title' value={data.title}
                onChange={handleInput}/><br/>
 
-        <label htmlFor="author">Author:</label>
-         <select name='outher' value={data.outher}
-         onChange={handleInput} id='author'>
+        <label htmlFor="auther">Author:</label>
+         <select name='auther' value={data.auther}
+         onChange={handleInput} id='auther'>
           <option value=''> select Author</option>
           {AllAuthors} 
          </select><br/>
@@ -51,8 +57,6 @@ export default function PostUpdate(){
          <textarea  id="content" name='body' value={data.body}
          onChange={handleInput}></textarea><br/>
           <button type='submit' >Save</button>
-        
-
         </form>
     )
 

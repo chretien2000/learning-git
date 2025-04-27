@@ -1,24 +1,30 @@
 import {useSelector} from 'react-redux'
-import {selectUserById} from '../storeApp/userStore'
+import {selectUsersById} from '../storeApp/userStore'
 import {useParams,Link} from 'react-router-dom'
-import { selectAllPost,selectpostByUser} from '../storeApp/postSlice'
+import {useGetPostByIdQuery} from '../storeApp/postSlice'
 
 export default function UserPage(){
     const {userId}=useParams()
-    const user=useSelector(state=>selectUserById(state,Number(userId)))
-const postForUser=useSelector(state=>selectpostByUser(state,Number(userId)))
-    /*const postForUser=useSelector(state=>{
-        const posts=selectAllPost(state)
-        const postArray=posts.posts.filter(post=>post.userId===Number(userId))
-        return postArray
-    })*/
-   console.log(postForUser)
-    const titleLists=postForUser.map(post=>(
-    <Link to={`/posts/${post.id}`} key={post.id}><li>{post.title}</li></Link>))
-
+    const user=useSelector(state=>selectUsersById(state,userId))
+    const {data:postForUser,isLoading,isSuccess,isError,error}=useGetPostByIdQuery(userId)
+   let content;
+   if(isLoading){
+    content=<p>Loading...</p>
+   }
+   else if(isSuccess){
+    console.log(postForUser)
+    content=postForUser.ids.map(id=><Link to={`/posts/${id}`}
+    key={id}><li>
+        {postForUser?.entities?.[id].title.substring(0,30)}
+    </li>
+    </Link>)
+   }
+   else if(isError){
+    content=<p>{error}</p>
+   }
     return(
     <>
     <h2>{user?.name}</h2>
-    <ol>{titleLists}</ol>
+    <ol>{content}</ol>
     </>)
 }
